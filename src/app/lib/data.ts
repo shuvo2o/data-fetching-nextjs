@@ -22,3 +22,21 @@ export const getUserPosts = async(userId: number) =>{
     }
     return res.json();
 }
+export const getUsers = async (): Promise<User[]> => {
+  const res = await fetch("https://jsonplaceholder.typicode.com/users");
+
+  if (!res.ok) {
+    throw new Error("failed to fetch users");
+  }
+
+  return res.json();
+};
+
+export const getPosts = async(): Promise<Post[]> =>{
+    const res = await fetch ("https://jsonplaceholder.typicode.com/posts");
+    if(!res.ok){
+        throw new Error('failed to fetch users')
+    }
+    return res.json()
+}
+
