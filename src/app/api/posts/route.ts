@@ -27,17 +27,3 @@ export async function POST(request: Request){
     return NextResponse.json({message: "Post created Succesfully", post:newPost})
 }
 
-// delete post
-export async function DELETE(req, { params }) {
-  try {
-    await connectDB();
-    
-    const { id } = params;
-
-    await Post.findByIdAndDelete(id);
-
-    return NextResponse.json({ message: "Post deleted" });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
-  }
-}
