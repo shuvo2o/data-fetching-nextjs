@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent } from "react";
-import { PostDB } from "@/types/post"; // তুমি যেই path এ রেখেছো
+import { PostDB } from "@/types/post";
+import Link from "next/link";
 
 const PostPage = () => {
   const [posts, setPosts] = useState<PostDB[]>([]);
@@ -10,11 +11,19 @@ const PostPage = () => {
   const [description, setDescription] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  // load posts
+  // fetch posts from /api/posts (GET)
+  const fetchPosts = async () => {
+    try {
+      const res = await fetch("/api/posts");
+      const data: PostDB[] = await res.json();
+      setPosts(data);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/posts")
-      .then((res) => res.json())
-      .then((data: PostDB[]) => setPosts(data));
+    fetchPosts();
   }, []);
 
   // create post
@@ -28,25 +37,32 @@ const PostPage = () => {
 
     setError("");
 
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, author, description }),
-    });
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, author, description }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
+      setPosts((prev) => [...prev, data.post]);
 
-    setPosts((prev) => [...prev, data.post]);
-
-    setTitle("");
-    setAuthor("");
-    setDescription("");
+      setTitle("");
+      setAuthor("");
+      setDescription("");
+    } catch (err) {
+      console.error("Failed to create post:", err);
+    }
   };
 
   // delete post
   const deletePost = async (_id: string) => {
-    await fetch(`/api/posts/${_id}`, { method: "DELETE" });
-    setPosts((prev) => prev.filter((post) => post._id !== _id));
+    try {
+      await fetch(`/api/posts/${_id}`, { method: "DELETE" });
+      setPosts((prev) => prev.filter((post) => post._id.toString() !== _id));
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+    }
   };
 
   return (
@@ -70,7 +86,7 @@ const PostPage = () => {
           placeholder="Author Name"
           className="w-full border p-2"
         />
-        <input
+        <textarea
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -87,20 +103,34 @@ const PostPage = () => {
 
       <ul className="space-y-4">
         {posts.map((post) => (
-          <li key={post._id} className="border p-4 rounded-lg shadow">
-            <h2 className="font-bold text-lg">{post.title}</h2>
-            <p>Author: {post.author}</p>
-            <p>Description: {post.description}</p>
+          <li key={post._id} className="border p-4 rounded-lg shadow hover:shadow-md transition-shadow">
+            <Link href={`db-posts/${post._id}`} className="font-bold text-lg hover:text-blue-600 transition-colors">
+              <h2>{post.title}</h2>
+            </Link>
+            <p className="mt-1 text-white">Author: {post.author}</p>
+            <p className="mt-1 text-white">{post.description}</p>
 
-            <button
-              onClick={() => deletePost(post._id.toString())}
-              className="text-red-600 underline mt-2"
-            >
-              Delete
-            </button>
+            <div className="flex gap-3 mt-4">
+              {/* Edit Button */}
+              <Link
+                href={`/db-posts/${post._id}/edit`}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors shadow-sm"
+              >
+                Edit
+              </Link>
+
+              {/* Delete Button */}
+              <button
+                onClick={() => deletePost(post._id.toString())}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors shadow-sm"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
+
     </div>
   );
 };
