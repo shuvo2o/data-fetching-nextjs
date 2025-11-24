@@ -1,23 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, FormEvent } from "react";
+import { PostDB } from "@/types/post"; // তুমি যেই path এ রেখেছো
 
 const PostPage = () => {
-  const [posts, setPosts] = useState([]);
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [description, setDescription] = useState("");
-  const [error, setError] = useState("");
+  const [posts, setPosts] = useState<PostDB[]>([]);
+  const [title, setTitle] = useState<string>("");
+  const [author, setAuthor] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   // load posts
   useEffect(() => {
     fetch("/api/posts")
       .then((res) => res.json())
-      .then((data) => setPosts(data));
+      .then((data: PostDB[]) => setPosts(data));
   }, []);
 
   // create post
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!title.trim() || !author.trim() || !description.trim()) {
@@ -34,6 +35,7 @@ const PostPage = () => {
     });
 
     const data = await res.json();
+
     setPosts((prev) => [...prev, data.post]);
 
     setTitle("");
@@ -42,13 +44,9 @@ const PostPage = () => {
   };
 
   // delete post
-  const deletePost = async (id) => {
-    await fetch(`/api/posts/${id}`, {
-      method: "DELETE",
-    });
-
-    // UI theke remove
-    setPosts((prev) => prev.filter((post) => post._id !== id));
+  const deletePost = async (_id: string) => {
+    await fetch(`/api/posts/${_id}`, { method: "DELETE" });
+    setPosts((prev) => prev.filter((post) => post._id !== _id));
   };
 
   return (
@@ -65,7 +63,6 @@ const PostPage = () => {
           placeholder="Post Title"
           className="w-full border p-2"
         />
-
         <input
           type="text"
           value={author}
@@ -73,7 +70,6 @@ const PostPage = () => {
           placeholder="Author Name"
           className="w-full border p-2"
         />
-
         <input
           type="text"
           value={description}
@@ -81,7 +77,6 @@ const PostPage = () => {
           placeholder="Description"
           className="w-full border p-2"
         />
-
         <button
           type="submit"
           className="bg-blue-600 text-white py-2 px-4 rounded"
@@ -97,9 +92,8 @@ const PostPage = () => {
             <p>Author: {post.author}</p>
             <p>Description: {post.description}</p>
 
-            {/* Delete Button */}
             <button
-              onClick={() => deletePost(post._id)}
+              onClick={() => deletePost(post._id.toString())}
               className="text-red-600 underline mt-2"
             >
               Delete
